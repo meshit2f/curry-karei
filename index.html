@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="data:," />
+<title>カレーかカレイか見分けゲーム 共有版</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FFF6E3; --card:#FFFFFF; --card2:#FFFDF6; --ink:#2B1D0E; --muted:#7A6248; --line:#EAD9B8;
+    --curry:#C05A12; --curry-bg:#FDEBD3; --turmeric:#E9A426;
+    --teal:#0E7C7B; --teal-bg:#DDF2F0;
+    --gray:#6B7280; --gray-bg:#ECECEC;
+    --good:#1B8A4B; --bad:#D23B2E;
+    --shadow:0 10px 28px rgba(90,55,0,.14);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#1D160E; --card:#2B2115; --card2:#241B10; --ink:#F7EAD2; --muted:#C4A87E; --line:#4A3820;
+      --curry:#F08A3C; --curry-bg:#3D2712; --teal:#3EC6C2; --teal-bg:#123B3A;
+      --gray:#B9BDC4; --gray-bg:#333333;
+      --shadow:0 10px 28px rgba(0,0,0,.45);
+    }
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"M PLUS Rounded 1c",system-ui,-apple-system,"Hiragino Maru Gothic ProN",sans-serif;line-height:1.6}
+  button,[role="button"],select,summary,input:not([type="checkbox"],[type="radio"]){min-height:2.75rem}
+  .wrap{max-width:880px;margin:0 auto;padding:18px 16px 56px}
+  h1,h2,h3{font-family:"Zen Maru Gothic","M PLUS Rounded 1c",sans-serif;line-height:1.25;margin:0}
+  h1{font-size:clamp(26px,5.5vw,40px);font-weight:900;letter-spacing:.02em}
+  h1 .accent-c{color:var(--curry)} h1 .accent-k{color:var(--teal)}
+  .lead{color:var(--muted);font-weight:700;margin:8px 0 0;font-size:15px}
+  .lead b{color:var(--ink)}
+  /* player bar */
+  .playerbar{display:flex;flex-wrap:wrap;gap:10px;align-items:end;background:var(--card);border:2px solid var(--line);border-radius:18px;padding:14px;margin-top:18px;box-shadow:var(--shadow)}
+  .playerbar label{font-size:13px;font-weight:800;color:var(--muted);display:block;margin-bottom:4px}
+  .playerbar .field{flex:1 1 200px}
+  .playerbar input{width:100%;padding:10px 14px;border-radius:12px;border:2px solid var(--line);background:var(--card2);color:var(--ink);font-size:17px;font-weight:800;font-family:inherit}
+  .btn{border:none;cursor:pointer;font-family:inherit;font-weight:900;border-radius:999px;padding:12px 22px;font-size:16px;transition:transform .08s ease, filter .15s ease}
+  .btn:active{transform:scale(.97)}
+  .btn-primary{background:var(--turmeric);color:#2B1D0E;box-shadow:0 4px 0 #B97F14}
+  .btn-primary:hover{filter:brightness(1.05)}
+  .btn-ghost{background:transparent;color:var(--ink);border:2px solid var(--line)}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .player-chip{font-weight:900;background:var(--curry-bg);color:var(--curry);border-radius:999px;padding:8px 14px;font-size:14px;white-space:nowrap}
+  /* stats */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+  @media(max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
+  .stat{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px 12px;text-align:center}
+  .stat .k{font-size:12px;font-weight:800;color:var(--muted)}
+  .stat .v{font-size:24px;font-weight:900;font-family:"Zen Maru Gothic",sans-serif;line-height:1.2}
+  .stat .v small{font-size:13px;color:var(--muted)}
+  /* game card */
+  .gamecard{background:var(--card);border:2px solid var(--line);border-radius:24px;box-shadow:var(--shadow);margin-top:14px;overflow:hidden}
+  .timerwrap{height:14px;background:var(--line)}
+  .timerbar{height:100%;width:100%;background:var(--teal);transition:width .05s linear}
+  .timerbar.low{background:var(--bad)}
+  .stage{padding:20px 18px 8px;text-align:center}
+  .qmeta{font-weight:900;color:var(--muted);font-size:14px;letter-spacing:.04em}
+  .artbox{margin:10px auto 4px;max-width:420px;background:var(--card2);border:2px dashed var(--line);border-radius:20px;padding:10px}
+  .artbox svg{width:100%;height:auto;display:block}
+  .feedback{min-height:34px;text-align:center;font-weight:900;font-size:17px;padding:2px 16px 6px}
+  .feedback.good{color:var(--good)} .feedback.bad{color:var(--bad)}
+  .feedback .sub{display:block;font-size:13px;color:var(--muted);font-weight:700}
+  .actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;padding:8px 18px 20px}
+  @media(max-width:560px){.actions{grid-template-columns:1fr;gap:10px}}
+  .act{border:none;cursor:pointer;border-radius:18px;padding:14px 10px;font-family:inherit;text-align:center;transition:transform .08s ease, filter .15s ease}
+  .act:active{transform:scale(.97)}
+  .act:disabled{opacity:.5;cursor:not-allowed}
+  .act .emoji{font-size:30px;display:block;line-height:1.1}
+  .act .label{font-size:18px;font-weight:900;display:block;margin-top:2px}
+  .act .key{font-size:11px;font-weight:800;opacity:.75;display:block}
+  .act-curry{background:var(--curry-bg);color:var(--curry);box-shadow:inset 0 0 0 2px var(--curry)}
+  .act-karei{background:var(--teal-bg);color:var(--teal);box-shadow:inset 0 0 0 2px var(--teal)}
+  .act-through{background:var(--gray-bg);color:var(--gray);box-shadow:inset 0 0 0 2px var(--gray)}
+  .idle-msg{text-align:center;padding:26px 20px 30px}
+  .idle-msg p{color:var(--muted);font-weight:700;margin:8px 0 16px}
+  /* collections */
+  .collections{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:14px}
+  @media(max-width:560px){.collections{grid-template-columns:1fr}}
+  .colbox{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:12px 14px}
+  .colbox h3{font-size:15px;margin-bottom:4px}
+  .colbox .items{font-size:20px;line-height:1.5;min-height:30px;word-break:break-all}
+  .colbox .count{font-weight:900;color:var(--muted);font-size:13px}
+  /* result */
+  .result{display:none;background:var(--card);border:3px solid var(--turmeric);border-radius:24px;box-shadow:var(--shadow);margin-top:16px;padding:22px 20px;text-align:center}
+  .result.show{display:block}
+  .result .rank-big{font-size:34px;font-weight:900;font-family:"Zen Maru Gothic",sans-serif}
+  .result .score-big{font-size:52px;font-weight:900;font-family:"Zen Maru Gothic",sans-serif;color:var(--curry);line-height:1.1}
+  .result .grid{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:12px 0}
+  .result .pill{background:var(--card2);border:2px solid var(--line);border-radius:999px;padding:6px 14px;font-weight:800;font-size:14px}
+  /* sections */
+  section.block{margin-top:36px}
+  section.block>h2{font-size:24px;font-weight:900;display:flex;align-items:center;gap:10px}
+  section.block>p.note{color:var(--muted);font-weight:700;font-size:14px;margin:6px 0 14px}
+  /* ranking table */
+  .rank-table{width:100%;border-collapse:collapse;background:var(--card);border:2px solid var(--line);border-radius:16px;overflow:hidden}
+  .rank-table th,.rank-table td{padding:10px 12px;text-align:left;font-size:15px}
+  .rank-table th{background:var(--card2);color:var(--muted);font-size:13px}
+  .rank-table tr+tr td{border-top:1px solid var(--line)}
+  .rank-table td.num,.rank-table th.num{text-align:right;font-variant-numeric:tabular-nums}
+  .rank-table tr.me td{background:var(--curry-bg);font-weight:900}
+  .empty-rank{background:var(--card);border:2px dashed var(--line);border-radius:16px;padding:18px;text-align:center;color:var(--muted);font-weight:700}
+  /* zukan */
+  .zukan-group{margin-top:18px}
+  .zukan-group h3{font-size:17px;margin-bottom:10px}
+  .zukan-group h3 .tag{font-size:12px;border-radius:999px;padding:3px 10px;margin-left:6px;vertical-align:middle;color:#fff}
+  .tag-curry{background:var(--curry)} .tag-karei{background:var(--teal)} .tag-through{background:var(--gray)}
+  .zukan-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+  .zcard{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px;text-align:center}
+  .zcard svg{width:100%;height:auto}
+  .zcard .zname{font-weight:900;font-size:15px;margin-top:4px}
+  .zcard .zans{font-size:12px;font-weight:800;border-radius:999px;padding:3px 10px;display:inline-block;margin-top:4px}
+  .zans-curry{background:var(--curry-bg);color:var(--curry)} .zans-karei{background:var(--teal-bg);color:var(--teal)} .zans-through{background:var(--gray-bg);color:var(--gray)}
+  .zcard .zhint{font-size:12px;color:var(--muted);font-weight:700;margin-top:6px;text-align:left}
+  .howto{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:14px 18px;margin-top:14px}
+  .howto ul{margin:6px 0;padding-left:20px;font-weight:700}
+  .howto li{margin:3px 0}
+  footer{margin-top:40px;text-align:center;color:var(--muted);font-size:13px;font-weight:700}
+  .flash-good{animation:fg .5s ease} .flash-bad{animation:fb .5s ease}
+  @keyframes fg{0%{box-shadow:0 0 0 6px var(--good)}100%{box-shadow:var(--shadow)}}
+  @keyframes fb{0%{box-shadow:0 0 0 6px var(--bad)}100%{box-shadow:var(--shadow)}}
+  @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important} html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><span class="accent-c">カレー</span>か<span class="accent-k">カレイ</span>か見分けゲーム</h1>
+    <p class="lead">出てきたものを見分けて仕分けよう。全<b>20問</b>のスコアアタックで、全員同じ問題数で競えます。<br>
+    カレー → <b>水を飲む</b> ／ カレイ → <b>水槽に入れる</b> ／ どちらでもない → <b>スルーする</b></p>
+  </header>
+
+  <div class="playerbar">
+    <div class="field">
+      <label for="playerName">ユーザー名（ランキング用）</label>
+      <input id="playerName" type="text" maxlength="12" placeholder="名前を入力（例：たろう）" autocomplete="off">
+    </div>
+    <span class="player-chip" id="playerChip">プレイヤー：ゲスト</span>
+    <button class="btn btn-primary" id="startBtn" type="button">▶ ゲームスタート（20問）</button>
+    <a class="btn btn-ghost" href="#zukan" style="text-decoration:none;display:inline-flex;align-items:center">まず出題図鑑をすべて見る</a>
+  </div>
+
+  <div class="stats" aria-live="polite">
+    <div class="stat"><div class="k">スコア</div><div class="v" id="statScore">0</div></div>
+    <div class="stat"><div class="k">進み具合</div><div class="v"><span id="statQ">0</span><small> / 20問</small></div></div>
+    <div class="stat"><div class="k">コンボ</div><div class="v" id="statCombo">0</div></div>
+    <div class="stat"><div class="k">正解 / ミス</div><div class="v"><span id="statOk">0</span><small> / </small><span id="statNg" style="font-size:18px">0</span></div></div>
+  </div>
+
+  <div class="gamecard" id="gameCard">
+    <div class="timerwrap"><div class="timerbar" id="timerBar"></div></div>
+
+    <div id="idleArea" class="idle-msg">
+      <div style="font-size:52px" aria-hidden="true">🍛 🐟</div>
+      <h2 style="font-size:22px">見分けられるかな？</h2>
+      <p>制限時間内に正しいボタンを押してね。進むほど制限時間が短くなります。<br>ミスしても20問最後まで続けられます（コンボは途切れます）。</p>
+      <button class="btn btn-primary" id="startBtn2" type="button">スタートする</button>
+    </div>
+
+    <div id="playArea" style="display:none">
+      <div class="stage">
+        <div class="qmeta" id="qMeta">第1問 / 全20問（あと19問）</div>
+        <div class="artbox" id="artBox" role="img" aria-label="出題イラスト"></div>
+      </div>
+      <div class="feedback" id="feedback"></div>
+      <div class="actions">
+        <button class="act act-curry" id="btnCurry" type="button">
+          <span class="emoji" aria-hidden="true">💧</span>
+          <span class="label">水を飲む</span>
+          <span class="key">カレーのとき ・ キー A / ←</span>
+        </button>
+        <button class="act act-karei" id="btnKarei" type="button">
+          <span class="emoji" aria-hidden="true">🐠</span>
+          <span class="label">水槽に入れる</span>
+          <span class="key">カレイのとき ・ キー L / →</span>
+        </button>
+        <button class="act act-through" id="btnThrough" type="button">
+          <span class="emoji" aria-hidden="true">👋</span>
+          <span class="label">スルーする</span>
+          <span class="key">どちらでもない ・ キー S / ↓</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="collections">
+    <div class="colbox"><h3>💧 飲んだ水</h3><div class="items" id="colWater"></div><div class="count" id="colWaterCount">0杯</div></div>
+    <div class="colbox"><h3>🐠 わが家の水槽</h3><div class="items" id="colTank"></div><div class="count" id="colTankCount">0匹</div></div>
+    <div class="colbox"><h3>👋 スルーしたもの</h3><div class="items" id="colThrough"></div><div class="count" id="colThroughCount">0個</div></div>
+  </div>
+
+  <div class="result" id="resultBox" role="status">
+    <div style="font-size:15px;font-weight:900;color:var(--muted)">結果発表</div>
+    <div class="rank-big" id="resultRank"></div>
+    <div class="score-big"><span id="resultScore">0</span><span style="font-size:20px"> 点</span></div>
+    <div class="grid">
+      <span class="pill">正解 <b id="resultOk">0</b> / 20問</span>
+      <span class="pill">ミス <b id="resultNg">0</b> 回</span>
+      <span class="pill">正解率 <b id="resultRate">0</b>%</span>
+      <span class="pill">最大コンボ <b id="resultCombo">0</b></span>
+      <span class="pill" id="resultPlace">ランキング ―</span>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:8px">
+      <button class="btn btn-primary" id="againBtn" type="button">もう一度遊ぶ</button>
+      <a class="btn btn-ghost" href="#ranking" style="text-decoration:none;display:inline-flex;align-items:center">ランキングを見る</a>
+    </div>
+  </div>
+
+  <div class="howto">
+    <h2 style="font-size:18px">遊び方</h2>
+    <ul>
+      <li>イラストが出たら、制限時間内に3つのボタンから正しいものを押します。</li>
+      <li>正解するとスコア＋コンボが伸びます。速く答えるほどボーナスが付きます。</li>
+      <li>ミス・時間切れでもゲームは続きますが、コンボは0に戻ります。全20問でスコア確定です。</li>
+      <li>紛らわしいニセモノ（ヒラメ、ハヤシライス、きつねうどん など）は「スルーする」が正解です。</li>
+    </ul>
+  </div>
+
+  <section class="block" id="ranking">
+    <h2>🏆 スコアランキング TOP10</h2>
+    <p class="note">このページを開いている間のランキングです。交代で別々の名前で遊んで競えます。</p>
+    <div id="rankArea"><div class="empty-rank">まだ記録がありません。20問遊ぶとここに載ります。</div></div>
+  </section>
+
+  <section class="block" id="zukan">
+    <h2>📖 出題図鑑（全13種）</h2>
+    <p class="note">出題されるものは全部で13種類。それぞれ正しいボタンも一緒に載せています。</p>
+    <div id="zukanArea"></div>
+  </section>
+
+  <footer>カレーかカレイか見分けゲーム ・ 共有版</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- イラスト（SVG） ---------- */
+function svgWrap(inner){ return '<svg viewBox="0 0 200 140" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'+inner+'</svg>'; }
+function plateRice(sauce, sauceLabel){
+  return svgWrap(
+    '<ellipse cx="100" cy="102" rx="78" ry="20" fill="#DCE6EC"/><ellipse cx="100" cy="97" rx="70" ry="17" fill="#FFFFFF"/>'+
+    '<path d="M42 92 Q55 62 92 66 Q100 84 88 97 Q55 100 42 92Z" fill="#FFFFFF" stroke="#E3D9C8" stroke-width="2"/>'+
+    '<path d="M92 66 Q150 58 160 90 Q150 100 102 98 Q88 84 92 66Z" fill="'+sauce+'"/>'+
+    '<circle cx="118" cy="76" r="6" fill="#E07B2A"/><rect x="132" y="82" width="10" height="8" rx="2" fill="#7CB342"/>'+
+    '<circle cx="140" cy="72" r="4" fill="#C94F2E"/>'+
+    '<text x="100" y="132" font-size="11" text-anchor="middle" fill="#999">'+sauceLabel+'</text>');
+}
+function udonBowl(broth, topping){
+  return svgWrap(
+    '<path d="M28 52 L172 52 L162 108 Q100 124 38 108 Z" fill="#3E5C76"/><path d="M28 52 L172 52 L169 66 L31 66Z" fill="#5B84A6"/>'+
+    '<ellipse cx="100" cy="52" rx="72" ry="12" fill="'+broth+'"/>'+
+    '<path d="M48 50 Q70 40 92 50 Q114 60 136 50" stroke="#F5E6C4" stroke-width="6" fill="none" stroke-linecap="round"/>'+
+    '<path d="M56 55 Q80 46 104 55 Q126 62 148 54" stroke="#F5E6C4" stroke-width="5" fill="none" stroke-linecap="round"/>'+
+    topping);
+}
+function soupBowl(color){
+  return svgWrap(
+    '<path d="M30 56 L170 56 L160 106 Q100 122 40 106Z" fill="#8D4A2F"/><ellipse cx="100" cy="56" rx="70" ry="12" fill="'+color+'"/>'+
+    '<circle cx="72" cy="50" r="9" fill="#E07B2A"/><circle cx="98" cy="46" r="8" fill="#C94F2E"/>'+
+    '<rect x="118" y="42" width="14" height="11" rx="3" fill="#7CB342"/><circle cx="140" cy="50" r="7" fill="#F2C230"/>'+
+    '<path d="M60 44 Q100 34 142 44" stroke="#FFF3D6" stroke-width="4" fill="none" stroke-linecap="round" opacity=".7"/>');
+}
+function panCross(filling, crust, crumb){
+  var half = function(x, flip){
+    return '<g transform="translate('+x+',0) scale('+flip+',1) translate('+(-x)+',0)">'+
+    '<path d="M'+(x-38)+' 96 Q'+(x-40)+' 44 '+x+' 42 Q'+(x+16)+' 44 '+x+' 96 Z" fill="'+crust+'"/>'+
+    '<path d="M'+(x-28)+' 94 Q'+(x-29)+' 56 '+x+' 54 L'+x+' 94Z" fill="'+crumb+'"/>'+
+    '<ellipse cx="'+(x-9)+'" cy="76" rx="10" ry="15" fill="'+filling+'"/>'+
+    '<circle cx="'+(x-12)+'" cy="68" r="3" fill="#E07B2A"/><circle cx="'+(x-7)+'" cy="84" r="2.6" fill="#7CB342"/></g>';
+  };
+  return svgWrap(half(72,1)+half(128,-1)+'<ellipse cx="100" cy="104" rx="76" ry="10" fill="#E8DCC2"/>');
+}
+function flatfish(body, spot, flip, mouth){
+  var dir = flip ? -1 : 1;
+  return svgWrap('<g transform="translate(100,72) scale('+dir+',1)">'+
+    '<path d="M-78 0 Q-40 -38 28 -34 Q74 -28 82 0 Q74 28 28 34 Q-40 38 -78 0Z" fill="'+body+'"/>'+
+    '<path d="M82 0 L96 -14 L94 0 L96 14Z" fill="'+body+'"/>'+
+    spot+
+    '<circle cx="34" cy="-12" r="5" fill="#FFF"/><circle cx="35" cy="-12" r="2.6" fill="#222"/>'+
+    '<circle cx="48" cy="-6" r="5" fill="#FFF"/><circle cx="49" cy="-6" r="2.6" fill="#222"/>'+
+    '<path d="M52 8 Q62 12 70 '+mouth+'" stroke="#5A3A22" stroke-width="3" fill="none" stroke-linecap="round"/>'+
+    '<path d="M-60 -18 Q0 -30 60 -16" stroke="rgba(255,255,255,.35)" stroke-width="5" fill="none"/></g>');
+}
+var spots1='<circle cx="-30" cy="-10" r="6" fill="rgba(0,0,0,.18)"/><circle cx="0" cy="12" r="7" fill="rgba(0,0,0,.18)"/><circle cx="-52" cy="10" r="5" fill="rgba(0,0,0,.15)"/><circle cx="14" cy="-16" r="5" fill="rgba(0,0,0,.15)"/>';
+var spots2='<circle cx="-20" cy="0" r="10" fill="rgba(255,255,255,.4)"/><circle cx="16" cy="10" r="8" fill="rgba(255,255,255,.35)"/><circle cx="-48" cy="-8" r="7" fill="rgba(255,255,255,.35)"/>';
+var stripes='<path d="M-40 -26 Q-34 0 -40 26" stroke="rgba(0,0,0,.22)" stroke-width="7" fill="none"/><path d="M-8 -32 Q-2 0 -8 32" stroke="rgba(0,0,0,.22)" stroke-width="7" fill="none"/><path d="M24 -30 Q30 0 24 30" stroke="rgba(0,0,0,.22)" stroke-width="7" fill="none"/>';
+
+/* ---------- 出題データ（全13種） ---------- */
+var ITEMS=[
+ {id:"curry-rice", name:"カレーライス", cat:"curry", emoji:"🍛", art:plateRice("#8A4B12",""), hint:"白いごはん＋茶色いカレールー。定番のカレー。"},
+ {id:"curry-udon", name:"カレーうどん", cat:"curry", emoji:"🍜", art:udonBowl("#8A4B12",'<circle cx="100" cy="46" r="5" fill="#7CB342"/><circle cx="82" cy="50" r="4" fill="#7CB342"/>'), hint:"汁がカレー色でとろみあり。うどんでもカレー味ならカレー。"},
+ {id:"soup-curry", name:"スープカレー", cat:"curry", emoji:"🍲", art:soupBowl("#A85E14"), hint:"さらっとしたカレー色のスープに大きな野菜。カレーの仲間。"},
+ {id:"curry-pan", name:"カレーパン（断面図）", cat:"curry", emoji:"🥐", art:panCross("#8A4B12","#D99A2B","#F7E3B0"), hint:"半分に切った断面。金色の揚げ皮の中にカレールーが見える。"},
+ {id:"karei-1", name:"カレイ（まだら）", cat:"karei", emoji:"🐟", art:flatfish("#9A6B3F",spots1,false,"4"), hint:"茶色くてまだら模様。目は体の右側に集まっている。"},
+ {id:"karei-2", name:"カレイ（白まだら）", cat:"karei", emoji:"🐟", art:flatfish("#B98D55",spots2,false,"4"), hint:"明るい茶色に白い斑点。カレイの仲間。"},
+ {id:"karei-3", name:"カレイ（縞）", cat:"karei", emoji:"🐟", art:flatfish("#8A5A30",stripes,false,"4"), hint:"縦の縞模様があるカレイ。向きは右向き。"},
+ {id:"karei-4", name:"カレイ（薄色）", cat:"karei", emoji:"🐟", art:flatfish("#C8A061",spots1,false,"4"), hint:"色が薄めでもカレイはカレイ。水槽へ。"},
+ {id:"hirame", name:"ヒラメ", cat:"through", emoji:"🐠", art:flatfish("#7A6248",spots1,true,"14"), hint:"カレイにそっくり。でも向きが逆で口が大きい。カレイじゃない！"},
+ {id:"hayashi", name:"ハヤシライス", cat:"through", emoji:"🍛", art:plateRice("#7A2E1D",""), hint:"ごはん＋ソースでも、ソースが赤茶色のデミグラス。カレーではない。"},
+ {id:"beef-stew", name:"ビーフシチュー", cat:"through", emoji:"🍲", art:soupBowl("#4A2413"), hint:"スープカレー似でも、色が濃いこげ茶で牛肉ごろごろ。カレーではない。"},
+ {id:"kitsune-udon", name:"きつねうどん", cat:"through", emoji:"🍜", art:udonBowl("#E8C87E",'<rect x="76" y="34" width="48" height="20" rx="6" fill="#D99A2B" stroke="#B97F14" stroke-width="2"/>'), hint:"カレーうどん似でも、汁は透き通っただし＋大きな油揚げ。カレーではない。"},
+ {id:"anpan", name:"あんパン（断面図）", cat:"through", emoji:"🥯", art:panCross("#4A2C3F","#C98A4B","#F3E3C2"), hint:"カレーパン似の断面でも、皮は焼きパンで中身はあんこ。カレーではない。"}
+];
+var CAT_LABEL={curry:"カレー → 水を飲む", karei:"カレイ → 水槽に入れる", through:"どちらでもない → スルーする"};
+var TOTAL=20;
+
+/* ---------- 状態 ---------- */
+var state={playing:false, qIndex:0, score:0, ok:0, ng:0, combo:0, maxCombo:0, current:null, timerId:null, deadline:0, limit:5000, locked:false, entrySeq:0};
+var ranking=[]; // このページを開いている間だけ保持
+var collections={water:[], tank:[], through:[]};
+
+var $=function(id){return document.getElementById(id);};
+var els={name:$("playerName"), chip:$("playerChip"), score:$("statScore"), q:$("statQ"), combo:$("statCombo"), ok:$("statOk"), ng:$("statNg"),
+ timer:$("timerBar"), idle:$("idleArea"), play:$("playArea"), meta:$("qMeta"), art:$("artBox"), fb:$("feedback"), card:$("gameCard"),
+ result:$("resultBox"), rankArea:$("rankArea")};
+
+function playerName(){ var v=els.name.value.trim(); return v? v.slice(0,12) : "ゲスト"; }
+els.name.addEventListener("input", function(){ els.chip.textContent="プレイヤー："+playerName(); });
+
+function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i];a[i]=a[j];a[j]=t; } return a; }
+function buildDeck(){
+  var deck=[], i, pool;
+  // カテゴリバランス：カレー7・カレイ7・スルー6 を目安に20問作る（中身はランダム）
+  function pick(cat,n){ pool=ITEMS.filter(function(x){return x.cat===cat;}); for(var k=0;k<n;k++){ deck.push(pool[Math.floor(Math.random()*pool.length)]); } }
+  pick("curry",7); pick("karei",7); pick("through",6);
+  return shuffle(deck);
+}
+var deck=[];
+
+function timeLimitFor(q){ return Math.max(2200, 5000 - q*145); }
+
+function startGame(){
+  deck=buildDeck();
+  state.playing=true; state.qIndex=0; state.score=0; state.ok=0; state.ng=0; state.combo=0; state.maxCombo=0; state.locked=false;
+  collections={water:[], tank:[], through:[]};
+  els.result.classList.remove("show");
+  els.idle.style.display="none"; els.play.style.display="block";
+  els.name.disabled=true;
+  setBtns(true); updateStats(); renderCollections();
+  nextQuestion();
+  els.card.scrollIntoView({behavior:"smooth", block:"start"});
+}
+function setBtns(on){ ["btnCurry","btnKarei","btnThrough"].forEach(function(id){ $(id).disabled=!on; }); }
+
+function nextQuestion(){
+  if(state.qIndex>=TOTAL){ finishGame(); return; }
+  state.current=deck[state.qIndex];
+  state.limit=timeLimitFor(state.qIndex);
+  state.locked=false;
+  els.meta.textContent="第"+(state.qIndex+1)+"問 / 全"+TOTAL+"問（あと"+(TOTAL-state.qIndex-1)+"問）";
+  els.art.innerHTML=state.current.art;
+  els.art.setAttribute("aria-label","出題イラスト：なにが出たか見分けてください");
+  els.fb.textContent=""; els.fb.className="feedback";
+  els.timer.style.width="100%"; els.timer.classList.remove("low");
+  state.deadline=Date.now()+state.limit;
+  clearInterval(state.timerId);
+  state.timerId=setInterval(tick,40);
+  updateStats();
+}
+function tick(){
+  var remain=state.deadline-Date.now();
+  if(remain<=0){ els.timer.style.width="0%"; answer(null,true); return; }
+  var pct=remain/state.limit*100;
+  els.timer.style.width=pct+"%";
+  if(pct<30) els.timer.classList.add("low");
+}
+function answer(cat, timeout){
+  if(!state.playing || state.locked) return;
+  state.locked=true;
+  clearInterval(state.timerId);
+  var item=state.current;
+  var correct = !timeout && cat===item.cat;
+  var remain=Math.max(0, state.deadline-Date.now());
+  if(correct){
+    var gain=100 + Math.round(remain/state.limit*50) + Math.min(50, state.combo*5);
+    state.score+=gain; state.ok++; state.combo++;
+    if(state.combo>state.maxCombo) state.maxCombo=state.combo;
+    if(item.cat==="curry") collections.water.push(item.emoji);
+    if(item.cat==="karei") collections.tank.push(item.emoji);
+    if(item.cat==="through") collections.through.push(item.emoji);
+    els.fb.className="feedback good";
+    els.fb.innerHTML="⭕ 正解！「"+item.name+"」<span class='sub'>+"+gain+"点 ・ 正解は「"+CAT_LABEL[item.cat]+"」</span>";
+    flash("flash-good");
+  }else{
+    state.ng++; state.combo=0;
+    els.fb.className="feedback bad";
+    els.fb.innerHTML=(timeout?"⏰ 時間切れ！":"❌ ざんねん！")+"これは「"+item.name+"」<span class='sub'>正解は「"+CAT_LABEL[item.cat]+"」でした</span>";
+    flash("flash-bad");
+  }
+  renderCollections(); updateStats();
+  state.qIndex++;
+  setTimeout(function(){ if(state.playing) nextQuestion(); }, 950);
+}
+function flash(cls){ els.card.classList.remove("flash-good","flash-bad"); void els.card.offsetWidth; els.card.classList.add(cls); }
+
+function rankFor(score, ok){
+  if(ok>=19) return "🏆 カレー＆カレイ マスター";
+  if(ok>=16) return "🥇 見分け名人";
+  if(ok>=13) return "🥈 なかなかの目利き";
+  if(ok>=10) return "🥉 ふつうの目利き";
+  if(ok>=6)  return "🌱 見習いソムリエ";
+  return "🐣 まだまだ修行中";
+}
+function finishGame(){
+  state.playing=false; setBtns(false);
+  els.play.style.display="none"; els.idle.style.display="block";
+  els.name.disabled=false;
+  els.timer.style.width="0%";
+  var name=playerName();
+  state.entrySeq++;
+  var entry={id:state.entrySeq, name:name, score:state.score, ok:state.ok, when:new Date()};
+  ranking.push(entry);
+  ranking.sort(function(a,b){ return b.score-a.score || b.ok-a.ok; });
+  ranking=ranking.slice(0,10);
+  var place=ranking.indexOf(entry);
+  $("resultRank").textContent=rankFor(state.score, state.ok);
+  $("resultScore").textContent=state.score;
+  $("resultOk").textContent=state.ok;
+  $("resultNg").textContent=state.ng;
+  $("resultRate").textContent=Math.round(state.ok/TOTAL*100);
+  $("resultCombo").textContent=state.maxCombo;
+  $("resultPlace").textContent= place>=0 ? ("ランキング "+ranking.length+"人中 "+(place+1)+"位") : "ランキング圏外（11位以下）";
+  els.result.classList.add("show");
+  renderRanking(entry.id);
+  els.result.scrollIntoView({behavior:"smooth", block:"center"});
+}
+function renderRanking(highlightId){
+  if(!ranking.length){ els.rankArea.innerHTML='<div class="empty-rank">まだ記録がありません。20問遊ぶとここに載ります。</div>'; return; }
+  var medals=["🥇","🥈","🥉"];
+  var rows=ranking.map(function(r,i){
+    var rank=medals[i]||((i+1)+"位");
+    var time=("0"+r.when.getHours()).slice(-2)+":"+("0"+r.when.getMinutes()).slice(-2);
+    return '<tr'+(r.id===highlightId?' class="me"':'')+'><td>'+rank+'</td><td>'+escapeHtml(r.name)+'</td><td class="num"><b>'+r.score+'</b>点</td><td class="num">正解 '+r.ok+'/20</td><td class="num">'+time+'</td></tr>';
+  }).join("");
+  els.rankArea.innerHTML='<div style="overflow-x:auto"><table class="rank-table"><thead><tr><th>順位</th><th>名前</th><th class="num">スコア</th><th class="num">正解数</th><th class="num">時刻</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+}
+function escapeHtml(s){ return s.replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+
+function updateStats(){
+  els.score.textContent=state.score;
+  els.q.textContent=Math.min(state.ok+state.ng, TOTAL);
+  els.combo.textContent=state.combo;
+  els.ok.textContent=state.ok; els.ng.textContent=state.ng;
+}
+function renderCollections(){
+  $("colWater").textContent=collections.water.join(" ");
+  $("colTank").textContent=collections.tank.join(" ");
+  $("colThrough").textContent=collections.through.join(" ");
+  $("colWaterCount").textContent=collections.water.length+"杯";
+  $("colTankCount").textContent=collections.tank.length+"匹";
+  $("colThroughCount").textContent=collections.through.length+"個";
+}
+
+/* ---------- 図鑑 ---------- */
+function renderZukan(){
+  var groups=[["curry","カレーの仲間","tag-curry"],["karei","カレイの仲間","tag-karei"],["through","どちらでもない（スルー）","tag-through"]];
+  $("zukanArea").innerHTML=groups.map(function(g){
+    var cards=ITEMS.filter(function(x){return x.cat===g[0];}).map(function(x){
+      return '<div class="zcard">'+x.art+'<div class="zname">'+x.name+'</div><span class="zans zans-'+x.cat+'">'+CAT_LABEL[x.cat]+'</span><div class="zhint">'+x.hint+'</div></div>';
+    }).join("");
+    return '<div class="zukan-group"><h3>'+g[1]+'<span class="tag '+g[2]+'">'+ITEMS.filter(function(x){return x.cat===g[0];}).length+'種</span></h3><div class="zukan-grid">'+cards+'</div></div>';
+  }).join("");
+}
+
+/* ---------- イベント ---------- */
+$("startBtn").addEventListener("click", startGame);
+$("startBtn2").addEventListener("click", startGame);
+$("againBtn").addEventListener("click", startGame);
+$("btnCurry").addEventListener("click", function(){ answer("curry", false); });
+$("btnKarei").addEventListener("click", function(){ answer("karei", false); });
+$("btnThrough").addEventListener("click", function(){ answer("through", false); });
+document.addEventListener("keydown", function(e){
+  if(!state.playing) return;
+  if(e.target && (e.target.tagName==="INPUT"||e.target.tagName==="TEXTAREA")) return;
+  var k=e.key;
+  if(k==="a"||k==="A"||k==="ArrowLeft"){ e.preventDefault(); answer("curry", false); }
+  else if(k==="l"||k==="L"||k==="ArrowRight"){ e.preventDefault(); answer("karei", false); }
+  else if(k==="s"||k==="S"||k==="ArrowDown"){ e.preventDefault(); answer("through", false); }
+});
+
+renderZukan(); renderRanking(-1); updateStats(); renderCollections();
+})();
+</script>
+</body>
+</html>
